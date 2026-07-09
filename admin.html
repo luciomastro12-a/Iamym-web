@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IAMYM — Admin</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#030303;--panel:rgba(255,255,255,0.045);--line:rgba(255,255,255,0.1);--text:#f4f4f4;--muted:#888;--green:#00FF88}
+    body{background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,sans-serif;min-height:100vh;-webkit-font-smoothing:antialiased}
+
+    /* LOGIN */
+    .login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px}
+    .login-box{background:rgba(255,255,255,0.04);border:1px solid var(--line);border-radius:24px;padding:48px 40px;width:min(400px,100%)}
+    .login-logo{font-size:22px;font-weight:700;letter-spacing:0.2em;margin-bottom:32px;text-align:center}
+    .login-logo span{color:var(--green)}
+    .login-title{font-size:24px;font-weight:700;letter-spacing:-0.04em;margin-bottom:6px;text-align:center}
+    .login-sub{font-size:14px;color:var(--muted);text-align:center;margin-bottom:28px}
+    .field{margin-bottom:16px}
+    .field label{display:block;font-size:11px;font-weight:600;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;margin-bottom:7px}
+    .field input{width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--line);border-radius:12px;color:var(--text);font-family:inherit;font-size:14px;padding:12px 14px;outline:none;transition:border-color 0.2s}
+    .field input:focus{border-color:rgba(255,255,255,0.3)}
+    .field input::placeholder{color:#444}
+    .login-btn{width:100%;background:#fff;color:#000;border:none;border-radius:12px;font-family:inherit;font-size:14px;font-weight:700;padding:14px;cursor:pointer;margin-top:8px;transition:background 0.2s}
+    .login-btn:hover{background:#e0e0e0}
+    .login-err{background:rgba(255,60,60,0.1);border:1px solid rgba(255,60,60,0.3);border-radius:10px;color:#ff6b6b;font-size:13px;padding:10px 14px;margin-bottom:14px;display:none;text-align:center}
+
+    /* ADMIN */
+    .admin-wrap{display:none;min-height:100vh}
+    .admin-header{display:flex;align-items:center;justify-content:space-between;padding:18px 32px;border-bottom:1px solid var(--line);position:sticky;top:0;background:rgba(3,3,3,0.95);backdrop-filter:blur(16px);z-index:10}
+    .admin-brand{font-size:16px;font-weight:700;letter-spacing:0.2em}
+    .admin-brand span{color:var(--green)}
+    .admin-user{font-size:13px;color:var(--muted)}
+    .logout-btn{background:none;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-family:inherit;font-size:12px;padding:7px 14px;cursor:pointer;transition:all 0.2s}
+    .logout-btn:hover{border-color:rgba(255,255,255,0.3);color:#fff}
+    .admin-body{padding:32px}
+    .admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:32px}
+    .stat-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 24px}
+    .stat-card .num{font-size:36px;font-weight:700;color:var(--green);line-height:1;margin-bottom:6px}
+    .stat-card .lbl{font-size:12px;color:var(--muted);letter-spacing:0.05em}
+    .tabs{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--line);padding-bottom:0}
+    .tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:inherit;font-size:13px;padding:10px 18px;cursor:pointer;transition:all 0.2s;margin-bottom:-1px}
+    .tab-btn:hover{color:#fff}
+    .tab-btn.active{color:var(--green);border-bottom-color:var(--green)}
+    .tab-content{display:none}
+    .tab-content.active{display:block}
+    .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:16px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead{background:rgba(255,255,255,0.04)}
+    th{padding:12px 16px;text-align:left;font-size:10px;font-weight:600;letter-spacing:0.1em;color:var(--muted);text-transform:uppercase;border-bottom:1px solid var(--line);white-space:nowrap}
+    td{padding:13px 16px;border-bottom:1px solid var(--line);color:var(--text);vertical-align:top}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:rgba(255,255,255,0.02)}
+    .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
+    .badge-green{background:rgba(0,255,136,0.12);color:var(--green)}
+    .badge-blue{background:rgba(100,150,255,0.12);color:#88aaff}
+    .date{font-size:11px;color:var(--muted)}
+    .empty{text-align:center;padding:48px;color:var(--muted);font-size:14px}
+    .refresh-btn{background:none;border:1px solid var(--line);border-radius:8px;color:var(--muted);font-family:inherit;font-size:12px;padding:7px 14px;cursor:pointer;transition:all 0.2s;margin-left:auto;display:block;margin-bottom:16px}
+    .refresh-btn:hover{border-color:rgba(255,255,255,0.3);color:#fff}
+    .export-btn{background:var(--green);color:#000;border:none;border-radius:8px;font-family:inherit;font-size:12px;font-weight:700;padding:7px 14px;cursor:pointer;transition:background 0.2s;margin-left:8px}
+    .export-btn:hover{background:#00cc6a}
+    .header-actions{display:flex;align-items:center;margin-bottom:16px}
+    .section-title{font-size:18px;font-weight:600;letter-spacing:-0.03em;margin-right:auto}
+    @media(max-width:600px){
+      .admin-body{padding:16px}
+      .admin-header{padding:14px 16px}
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-box">
+    <div class="login-logo">IAM<span>Y</span>M</div>
+    <h1 class="login-title">Panel de Admin</h1>
+    <p class="login-sub">Ingresá tus credenciales para continuar</p>
+    <div class="login-err" id="login-err">Usuario o contraseña incorrectos</div>
+    <form onsubmit="doLogin(event)">
+      <div class="field">
+        <label>Usuario</label>
+        <input type="text" id="usr" placeholder="Usuario" required autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input type="password" id="pwd" placeholder="Contraseña" required autocomplete="current-password">
+      </div>
+      <button type="submit" class="login-btn">Entrar →</button>
+    </form>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin-wrap" id="admin-wrap">
+  <div class="admin-header">
+    <div class="admin-brand">IAM<span>Y</span>M</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span class="admin-user">luciomastro</span>
+      <button class="logout-btn" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+  </div>
+
+  <div class="admin-body">
+    <!-- Stats -->
+    <div class="admin-stats">
+      <div class="stat-card">
+        <div class="num" id="total-creators">—</div>
+        <div class="lbl">Postulaciones creators</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="total-empresas">—</div>
+        <div class="lbl">Consultas empresas</div>
+      </div>
+      <div class="stat-card">
+        <div class="num" id="total-hoy">—</div>
+        <div class="lbl">Recibidas hoy</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('creators')">Creators y especialistas</button>
+      <button class="tab-btn" onclick="switchTab('empresas')">Consultas empresas</button>
+    </div>
+
+    <!-- Tab creators -->
+    <div class="tab-content active" id="tab-creators">
+      <div class="header-actions">
+        <span class="section-title">Postulaciones</span>
+        <button class="refresh-btn" onclick="loadData()">↻ Actualizar</button>
+        <button class="export-btn" onclick="exportCSV('creators')">↓ Exportar CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Especialidad</th>
+              <th>Email</th>
+              <th>Redes</th>
+              <th>Seguidores</th>
+              <th>Mercado</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-creators">
+            <tr><td colspan="7" class="empty">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab empresas -->
+    <div class="tab-content" id="tab-empresas">
+      <div class="header-actions">
+        <span class="section-title">Consultas</span>
+        <button class="refresh-btn" onclick="loadData()">↻ Actualizar</button>
+        <button class="export-btn" onclick="exportCSV('empresas')">↓ Exportar CSV</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Empresa</th>
+              <th>Email</th>
+              <th>Servicio</th>
+              <th>Mensaje</th>
+              <th>Fecha</th>
+            </tr>
+          </thead>
+          <tbody id="tbody-empresas">
+            <tr><td colspan="6" class="empty">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const { createClient } = supabase;
+  const sb = createClient(
+    'https://gkcugapghzfgywgrirzl.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrY3VnYXBnaHpmZ3l3Z3JpcnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1NzQwNjcsImV4cCI6MjA5OTE1MDA2N30.fy6vJbRHY70X7n1QceBK27TeB7CFOiDg5iNZQF79gmQ'
+  );
+
+  const CREDENTIALS = { user: 'luciomastro', pass: '4556231@' };
+
+  let creatorsData = [];
+  let empresasData = [];
+
+  function doLogin(e) {
+    e.preventDefault();
+    const u = document.getElementById('usr').value;
+    const p = document.getElementById('pwd').value;
+    const err = document.getElementById('login-err');
+    if (u === CREDENTIALS.user && p === CREDENTIALS.pass) {
+      sessionStorage.setItem('iamym_auth', '1');
+      document.getElementById('login-wrap').style.display = 'none';
+      document.getElementById('admin-wrap').style.display = 'block';
+      loadData();
+    } else {
+      err.style.display = 'block';
+    }
+  }
+
+  function doLogout() {
+    sessionStorage.removeItem('iamym_auth');
+    document.getElementById('login-wrap').style.display = 'flex';
+    document.getElementById('admin-wrap').style.display = 'none';
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  function formatDate(str) {
+    if (!str) return '—';
+    const d = new Date(str);
+    return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
+      ' ' + d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  async function loadData() {
+    const { data: creators } = await sb.from('postulaciones_creators').select('*').order('created_at', { ascending: false });
+    const { data: empresas } = await sb.from('consultas_empresas').select('*').order('created_at', { ascending: false });
+
+    creatorsData = creators || [];
+    empresasData = empresas || [];
+
+    // Stats
+    const hoy = new Date().toISOString().split('T')[0];
+    const hoyCount = [...creatorsData, ...empresasData].filter(r => r.created_at?.startsWith(hoy)).length;
+    document.getElementById('total-creators').textContent = creatorsData.length;
+    document.getElementById('total-empresas').textContent = empresasData.length;
+    document.getElementById('total-hoy').textContent = hoyCount;
+
+    // Tabla creators
+    const tc = document.getElementById('tbody-creators');
+    if (!creatorsData.length) {
+      tc.innerHTML = '<tr><td colspan="7" class="empty">Sin postulaciones todavía</td></tr>';
+    } else {
+      tc.innerHTML = creatorsData.map(r => `
+        <tr>
+          <td><strong>${r.nombre || '—'}</strong></td>
+          <td><span class="badge badge-green">${r.especialidad || '—'}</span></td>
+          <td><a href="mailto:${r.email}" style="color:#88aaff">${r.email || '—'}</a></td>
+          <td>${r.redes ? `<a href="${r.redes.startsWith('http') ? r.redes : 'https://' + r.redes}" target="_blank" style="color:#88aaff">${r.redes}</a>` : '—'}</td>
+          <td>${r.seguidores || '—'}</td>
+          <td>${r.mercado || '—'}</td>
+          <td class="date">${formatDate(r.created_at)}</td>
+        </tr>`).join('');
+    }
+
+    // Tabla empresas
+    const te = document.getElementById('tbody-empresas');
+    if (!empresasData.length) {
+      te.innerHTML = '<tr><td colspan="6" class="empty">Sin consultas todavía</td></tr>';
+    } else {
+      te.innerHTML = empresasData.map(r => `
+        <tr>
+          <td><strong>${r.nombre || '—'}</strong></td>
+          <td>${r.empresa || '—'}</td>
+          <td><a href="mailto:${r.email}" style="color:#88aaff">${r.email || '—'}</a></td>
+          <td><span class="badge badge-blue">${r.servicio || '—'}</span></td>
+          <td style="max-width:240px;color:#aaa;font-size:12px">${r.mensaje || '—'}</td>
+          <td class="date">${formatDate(r.created_at)}</td>
+        </tr>`).join('');
+    }
+  }
+
+  function exportCSV(type) {
+    const data = type === 'creators' ? creatorsData : empresasData;
+    if (!data.length) return alert('No hay datos para exportar');
+    const keys = Object.keys(data[0]);
+    const csv = [keys.join(','), ...data.map(r => keys.map(k => `"${(r[k] || '').toString().replace(/"/g, '""')}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `iamym_${type}_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+  }
+
+  // Auto-login si ya estaba logueado
+  if (sessionStorage.getItem('iamym_auth')) {
+    document.getElementById('login-wrap').style.display = 'none';
+    document.getElementById('admin-wrap').style.display = 'block';
+    loadData();
+  }
+</script>
+</body>
+</html>
