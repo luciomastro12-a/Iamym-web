@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IAMYM — Creator Network</title>
+  <meta name="description" content="IAMYM conecta marcas y startups con el talento digital que necesitan para crear contenido, construir comunidad y crecer." />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root { --black:#090909; --white:#f1f0eb; --blue:#2354ff; --line:#2a2a2a; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body { margin:0; background:var(--black); color:var(--white); font-family:Inter,Arial,sans-serif; }
+    a { color:inherit; text-decoration:none; }
+    .nav-shell { height:86px; padding:0 4vw; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:20; background:rgba(9,9,9,.94); backdrop-filter:blur(12px); }
+    .brand { font-family:Anton,sans-serif; font-size:31px; letter-spacing:.02em; position:relative; line-height:1; }
+    .brand span { display:block; width:28px; height:4px; background:var(--blue); margin:8px auto 0; }
+    nav { display:flex; gap:34px; font-size:13px; }
+    nav a { color:#bbb; transition:.2s; } nav a:hover { color:white; }
+    .nav-cta { border:1px solid #444; padding:12px 17px; font-size:13px; cursor:pointer; background:none; color:var(--white); font-family:Inter,sans-serif; }
+    .hero { min-height:740px; display:grid; grid-template-columns:56% 44%; border-bottom:1px solid var(--line); }
+    .hero-copy { padding:88px 4vw 68px; display:flex; flex-direction:column; justify-content:center; }
+    .eyebrow,.section-kicker { font-size:12px; letter-spacing:.16em; text-transform:uppercase; color:#aaa; }
+    .eyebrow i { width:7px; height:7px; border-radius:50%; background:var(--blue); display:inline-block; margin-right:10px; }
+    h1,h2,.visual-tag { font-family:Anton,sans-serif; font-weight:400; text-transform:uppercase; margin:0; line-height:.88; }
+    h1 { font-size:clamp(90px,11vw,176px); letter-spacing:-.035em; }
+    h1 span,h2 span { color:var(--blue); }
+    .hero-text { max-width:610px; font-size:18px; line-height:1.65; color:#b8b8b8; margin:34px 0 32px; }
+    .hero-actions { display:flex; gap:12px; flex-wrap:wrap; }
+    .button { padding:16px 22px; font-size:14px; font-weight:600; border:1px solid #444; cursor:pointer; background:none; color:var(--white); font-family:Inter,sans-serif; }
+    .button-blue { background:var(--blue); border-color:var(--blue); }
+    .button-ghost:hover { background:var(--white); color:var(--black); }
+    .hero-visual { position:relative; overflow:hidden; border-left:1px solid var(--line); background:#ddd; min-height:640px; }
+    .hero-visual img { width:100%; height:100%; object-fit:cover; filter:grayscale(1); transform:scale(1.08); }
+    .hero-visual:after { content:""; position:absolute; inset:0; background:linear-gradient(180deg,transparent 48%,rgba(0,0,0,.75)); }
+    .visual-tag { position:absolute; left:38px; bottom:58px; z-index:2; font-size:50px; }
+    .visual-tag::first-line { color:var(--white); }
+    .orbit { position:absolute; width:210px; height:210px; border:1px solid rgba(255,255,255,.55); border-radius:50%; right:-55px; top:55px; z-index:2; }
+    .orbit b { position:absolute; width:14px; height:14px; background:var(--blue); border-radius:50%; left:20px; bottom:22px; }
+    .hero-visual>p { position:absolute; top:22px; left:25px; z-index:3; font-size:10px; letter-spacing:.16em; }
+    .ticker { background:var(--blue); overflow:hidden; padding:16px 0; font-family:Anton,sans-serif; font-size:21px; letter-spacing:.06em; white-space:nowrap; }
+    .ticker div { min-width:max-content; padding-left:2vw; animation:tickerMove 25s linear infinite; }
+    .ticker b { color:var(--black); margin:0 18px; }
+    @keyframes tickerMove { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    .statement { padding:135px 8vw; display:grid; grid-template-columns:20% 58% 22%; gap:20px; border-bottom:1px solid var(--line); }
+    .statement h2 { font-size:clamp(50px,6vw,94px); line-height:.98; text-transform:none; }
+    .statement-copy { align-self:end; color:#aaa; line-height:1.65; font-size:15px; }
+    .network { display:grid; grid-template-columns:48% 52%; min-height:760px; border-bottom:1px solid var(--line); }
+    .network-image { position:relative; overflow:hidden; background:var(--white); }
+    .network-image img { width:100%; height:100%; object-fit:cover; filter:grayscale(1); }
+    .network-image span { position:absolute; left:35px; top:35px; font-family:Anton,sans-serif; font-size:52px; line-height:.9; color:var(--black); }
+    .network-copy { padding:90px 6vw; }
+    .network-copy h2 { font-size:clamp(58px,6vw,90px); margin:55px 0; }
+    .role-list { border-top:1px solid #333; }
+    .role-list div { display:grid; grid-template-columns:45px 1fr 30px; align-items:center; padding:18px 0; border-bottom:1px solid #333; }
+    .role-list small { color:#666; } .role-list span { font-size:17px; } .role-list b { color:var(--blue); }
+    .process { padding:125px 7vw; border-bottom:1px solid var(--line); }
+    .process-heading { display:grid; grid-template-columns:65% 35%; margin:54px 0 78px; }
+    .process-heading h2 { font-size:clamp(65px,8vw,120px); }
+    .process-heading p { color:#aaa; line-height:1.7; align-self:end; max-width:420px; }
+    .step-grid { display:grid; grid-template-columns:repeat(3,1fr); border-top:1px solid #333; border-left:1px solid #333; }
+    .step-grid article { min-height:300px; padding:28px; border-right:1px solid #333; border-bottom:1px solid #333; display:flex; flex-direction:column; }
+    .step-grid strong { color:var(--blue); font-size:13px; }
+    .step-grid h3 { font-size:22px; margin:auto 0 15px; }
+    .step-grid p { color:#888; font-size:14px; line-height:1.6; margin:0; }
+    .contact { padding:130px 7vw 110px; background:var(--white); color:var(--black); }
+    .contact .section-kicker { color:#666; }
+    .contact h2 { font-size:clamp(80px,13vw,190px); letter-spacing:-.03em; }
+    .contact-actions { margin-top:65px; display:flex; gap:14px; flex-wrap:wrap; }
+    .contact-actions a,.contact-actions button { padding:17px 22px; border:1px solid #222; font-size:14px; cursor:pointer; background:none; color:var(--black); font-family:Inter,sans-serif; font-weight:500; }
+    .contact-actions a:first-child { background:var(--black); color:white; }
+    footer { min-height:180px; display:flex; align-items:center; justify-content:space-between; padding:35px 4vw; color:#777; font-size:11px; letter-spacing:.08em; }
+    .footer-brand { color:var(--white); font-size:42px; }
+
+    /* ─── MODALES ─── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.88); z-index:100; align-items:center; justify-content:center; backdrop-filter:blur(8px); }
+    .modal-overlay.open { display:flex; }
+    .modal { background:#111; border:1px solid var(--line); padding:44px 40px; width:min(540px,calc(100% - 32px)); max-height:92vh; overflow-y:auto; position:relative; }
+    .modal-close { position:absolute; top:18px; right:22px; background:none; border:none; color:#777; font-size:24px; cursor:pointer; line-height:1; }
+    .modal-close:hover { color:#fff; }
+    .modal-tag { font-size:11px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:#888; margin-bottom:12px; }
+    .modal h2 { font-family:Anton,sans-serif; font-weight:400; text-transform:uppercase; font-size:clamp(30px,4vw,42px); margin:0 0 8px; line-height:.95; }
+    .modal > div > p { color:#999; font-size:14px; line-height:1.6; margin:0 0 30px; }
+    .form-group { margin-bottom:16px; }
+    .form-label { display:block; font-size:11px; font-weight:600; letter-spacing:.12em; color:#888; text-transform:uppercase; margin-bottom:7px; }
+    .form-input,.form-select,.form-textarea { width:100%; background:#0a0a0a; border:1px solid var(--line); color:var(--white); font-family:Inter,sans-serif; font-size:14px; padding:13px 14px; outline:none; transition:border-color .2s; appearance:none; border-radius:0; }
+    .form-input::placeholder,.form-textarea::placeholder { color:#555; }
+    .form-input:focus,.form-select:focus,.form-textarea:focus { border-color:var(--blue); }
+    .form-select option { background:#111; }
+    .form-textarea { resize:none; height:90px; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .form-submit { width:100%; background:var(--blue); color:#fff; border:none; font-family:Inter,sans-serif; font-size:14px; font-weight:600; padding:15px; cursor:pointer; margin-top:8px; transition:opacity .2s; }
+    .form-submit:hover { opacity:.9; }
+    .form-submit:disabled { opacity:.5; cursor:not-allowed; }
+    .form-success { display:none; text-align:center; padding:24px 0; }
+    .form-success .check { font-size:42px; margin-bottom:12px; color:var(--blue); }
+    .form-success h3 { font-family:Anton,sans-serif; font-weight:400; text-transform:uppercase; font-size:26px; margin:0 0 8px; }
+    .form-success p { color:#999; font-size:14px; margin:0; }
+    .form-error { background:rgba(255,60,60,.08); border:1px solid rgba(255,60,60,.3); color:#ff6b6b; font-size:13px; padding:11px 14px; margin-bottom:14px; display:none; }
+
+    @media(max-width:850px){
+      nav{display:none}
+      .hero{grid-template-columns:1fr}
+      .hero-copy{padding-top:70px}
+      .hero-visual{border-left:0;border-top:1px solid var(--line);min-height:520px}
+      .statement{grid-template-columns:1fr;padding:90px 6vw}
+      .network{grid-template-columns:1fr}
+      .network-image{min-height:550px}
+      .process-heading{grid-template-columns:1fr;gap:30px}
+      .step-grid{grid-template-columns:1fr}
+      .step-grid article{min-height:220px}
+      .contact{padding:90px 6vw}
+      footer{align-items:flex-start;gap:28px;flex-direction:column}
+    }
+    @media(max-width:520px){
+      .nav-shell{height:72px}
+      .nav-cta{padding:10px 13px}
+      .hero{min-height:auto}
+      .hero-copy{padding:65px 5vw 55px}
+      h1{font-size:86px}
+      .hero-text{font-size:16px}
+      .visual-tag{font-size:39px;left:22px}
+      .statement h2{font-size:52px}
+      .network-copy{padding:75px 6vw}
+      .network-copy h2{font-size:57px}
+      .process{padding:90px 6vw}
+      .process-heading h2{font-size:66px}
+      .contact h2{font-size:72px}
+      footer p:nth-child(2){display:none}
+      .modal{padding:32px 22px}
+      .form-row{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+  <header class="nav-shell">
+    <a class="brand" href="#inicio" aria-label="IAMYM inicio">IAMYM<span></span></a>
+    <nav aria-label="Navegación principal">
+      <a href="#que-hacemos">Qué hacemos</a>
+      <a href="#red">La red</a>
+      <a href="#como-funciona">Cómo funciona</a>
+    </nav>
+    <button class="nav-cta" onclick="openModal('empresa')">Hablemos ↗</button>
+  </header>
+
+  <section class="hero" id="inicio">
+    <div class="hero-copy">
+      <p class="eyebrow"><i></i> Creator Network · Argentina + LATAM</p>
+      <h1>Ideas que<br /><span>crecen.</span></h1>
+      <p class="hero-text">
+        Conectamos marcas y startups con el talento digital que necesitan
+        para crear contenido, construir comunidad y crecer.
+      </p>
+      <div class="hero-actions">
+        <button class="button button-blue" onclick="openModal('empresa')">Necesito un equipo ↗</button>
+        <button class="button button-ghost" onclick="openModal('creator')">Quiero sumarme</button>
+      </div>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <img src="images/equipo-creativo.png" alt="" />
+      <div class="visual-tag">CREATIVIDAD<br />+ ESTRATEGIA</div>
+      <div class="orbit"><b></b></div>
+      <p>IAMYM / 001</p>
+    </div>
+  </section>
+
+  <section class="ticker" aria-label="Servicios">
+    <div>CONTENIDO <b>•</b> DISEÑO <b>•</b> EDICIÓN <b>•</b> ESTRATEGIA <b>•</b> COMUNIDAD <b>•</b> CRECIMIENTO <b>•</b> CONTENIDO <b>•</b> DISEÑO <b>•</b> EDICIÓN <b>•</b> ESTRATEGIA <b>•</b> COMUNIDAD <b>•</b> CRECIMIENTO <b>•</b></div>
+  </section>
+
+  <section class="statement" id="que-hacemos">
+    <p class="section-kicker">[ QUÉ HACEMOS ]</p>
+    <h2>No somos una agencia tradicional. Somos una <span>red creativa</span> armada para cada proyecto.</h2>
+    <p class="statement-copy">
+      Encontramos las personas indicadas, formamos equipos flexibles y coordinamos
+      el trabajo para que tu marca avance sin sumar estructura innecesaria.
+    </p>
+  </section>
+
+  <section class="network" id="red">
+    <div class="network-image">
+      <img src="images/creatividad-humana.png" alt="Retrato editorial que representa a la red creativa" />
+      <span>CREATOR<br />NETWORK</span>
+    </div>
+    <div class="network-copy">
+      <p class="section-kicker">[ LA RED ]</p>
+      <h2>Talento para cada parte del proceso.</h2>
+      <div class="role-list">
+        <div><small>01</small><span>Creadores de contenido</span><b>↗</b></div>
+        <div><small>02</small><span>Editores de video</span><b>↗</b></div>
+        <div><small>03</small><span>Diseñadores</span><b>↗</b></div>
+        <div><small>04</small><span>Community managers</span><b>↗</b></div>
+        <div><small>05</small><span>Estrategas digitales</span><b>↗</b></div>
+        <div><small>06</small><span>Especialistas en IA</span><b>↗</b></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="process" id="como-funciona">
+    <p class="section-kicker">[ CÓMO FUNCIONA ]</p>
+    <div class="process-heading">
+      <h2>Simple desde<br />el primer mensaje.</h2>
+      <p>Una forma más ágil de trabajar con talento creativo, sin perder dirección ni calidad.</p>
+    </div>
+    <div class="step-grid">
+      <article>
+        <strong>01</strong>
+        <h3>Contanos qué necesitás</h3>
+        <p>Objetivo, formato, tiempos y presupuesto. Sin reuniones eternas.</p>
+      </article>
+      <article>
+        <strong>02</strong>
+        <h3>Armamos el equipo</h3>
+        <p>Seleccionamos los perfiles adecuados dentro de nuestra red.</p>
+      </article>
+      <article>
+        <strong>03</strong>
+        <h3>Hacemos que suceda</h3>
+        <p>Coordinamos la producción y llevamos el proyecto de la idea a la entrega.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="contact" id="contacto">
+    <p class="section-kicker">[ EMPECEMOS ]</p>
+    <h2>¿Qué querés<br /><span>hacer crecer?</span></h2>
+    <div class="contact-actions">
+      <a href="mailto:equipo@iamymnetwork.com">equipo@iamymnetwork.com ↗</a>
+      <button onclick="openModal('creator')">Sumate a la red ↗</button>
+    </div>
+  </section>
+
+  <footer>
+    <div class="brand footer-brand">IAMYM<span></span></div>
+    <p>Creatividad, estrategia y contenido.</p>
+    <p>© 2026 IAMYM NETWORK</p>
+  </footer>
+
+  <!-- MODAL EMPRESA -->
+  <div class="modal-overlay" id="modal-empresa">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('empresa')">×</button>
+      <div id="form-empresa-content">
+        <div class="modal-tag">Para empresas</div>
+        <h2>Contanos tu proyecto</h2>
+        <p>Te respondemos en menos de 48 horas con una propuesta concreta.</p>
+        <div class="form-error" id="error-empresa">Hubo un error al enviar. Intentá de nuevo.</div>
+        <form onsubmit="submitEmpresa(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nombre</label>
+              <input type="text" class="form-input" id="e-nombre" placeholder="Tu nombre" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Empresa</label>
+              <input type="text" class="form-input" id="e-empresa" placeholder="Nombre de tu empresa">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" id="e-email" placeholder="tu@empresa.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">¿Qué necesitás?</label>
+            <select class="form-select form-input" id="e-servicio">
+              <option value="" disabled selected>Seleccioná un servicio</option>
+              <option>Creación de contenido</option>
+              <option>Gestión de redes</option>
+              <option>Campañas con creadores</option>
+              <option>Estrategia con IA</option>
+              <option>Red de talento</option>
+              <option>Lanzamiento de producto</option>
+              <option>No sé todavía</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mensaje</label>
+            <textarea class="form-textarea" id="e-mensaje" placeholder="Contanos brevemente tu objetivo o proyecto..."></textarea>
+          </div>
+          <button type="submit" class="form-submit" id="btn-empresa">Enviar consulta →</button>
+        </form>
+      </div>
+      <div class="form-success" id="success-empresa">
+        <div class="check">✓</div>
+        <h3>Consulta enviada</h3>
+        <p>Te respondemos en menos de 48 horas con una propuesta.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL CREATOR -->
+  <div class="modal-overlay" id="modal-creator">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal('creator')">×</button>
+      <div id="form-creator-content">
+        <div class="modal-tag">Para creadores y especialistas</div>
+        <h2>Sumate a la red</h2>
+        <p>Completá tus datos y te contactamos cuando llegue un proyecto que encaje con tu perfil. Sin exclusividad, sin costo.</p>
+        <div class="form-error" id="error-creator">Hubo un error al enviar. Intentá de nuevo.</div>
+        <form onsubmit="submitCreator(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Nombre</label>
+              <input type="text" class="form-input" id="c-nombre" placeholder="Tu nombre" required>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Especialidad</label>
+              <select class="form-select form-input" id="c-especialidad">
+                <option value="" disabled selected>¿Qué hacés?</option>
+                <option>Creador de contenido</option>
+                <option>Editor de video</option>
+                <option>Diseñador</option>
+                <option>Copywriter</option>
+                <option>Community Manager</option>
+                <option>Estratega digital</option>
+                <option>Consultor de IA</option>
+                <option>Otro</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="form-input" id="c-email" placeholder="tu@email.com" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Redes o portfolio</label>
+            <input type="text" class="form-input" id="c-redes" placeholder="@usuario o link a tu trabajo">
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Seguidores</label>
+              <select class="form-select form-input" id="c-seguidores">
+                <option value="" disabled selected>Rango</option>
+                <option>Menos de 1K</option>
+                <option>1K - 10K</option>
+                <option>10K - 50K</option>
+                <option>50K - 200K</option>
+                <option>Más de 200K</option>
+                <option>No aplica</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mercado principal</label>
+              <select class="form-select form-input" id="c-mercado">
+                <option value="" disabled selected>País / región</option>
+                <option>Argentina</option>
+                <option>México</option>
+                <option>Colombia</option>
+                <option>España</option>
+                <option>LATAM</option>
+                <option>Otro</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="form-submit" id="btn-creator">Quiero unirme →</button>
+        </form>
+      </div>
+      <div class="form-success" id="success-creator">
+        <div class="check">✓</div>
+        <h3>Postulación recibida</h3>
+        <p>Te contactamos cuando llegue un proyecto que encaje con tu perfil.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Supabase
+    const { createClient } = supabase;
+    const sb = createClient(
+      'https://gkcugapghzfgywgrirzl.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdrY3VnYXBnaHpmZ3l3Z3JpcnpsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM1NzQwNjcsImV4cCI6MjA5OTE1MDA2N30.fy6vJbRHY70X7n1QceBK27TeB7CFOiDg5iNZQF79gmQ'
+    );
+
+    function openModal(type) {
+      document.getElementById('modal-' + type).classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(type) {
+      document.getElementById('modal-' + type).classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.classList.remove('open');
+          document.body.style.overflow = '';
+        }
+      });
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        document.querySelectorAll('.modal-overlay.open').forEach(m => {
+          m.classList.remove('open');
+          document.body.style.overflow = '';
+        });
+      }
+    });
+
+    async function submitEmpresa(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-empresa');
+      const err = document.getElementById('error-empresa');
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+      err.style.display = 'none';
+
+      const { error } = await sb.from('consultas_empresas').insert({
+        nombre: document.getElementById('e-nombre').value,
+        empresa: document.getElementById('e-empresa').value,
+        email: document.getElementById('e-email').value,
+        servicio: document.getElementById('e-servicio').value,
+        mensaje: document.getElementById('e-mensaje').value,
+      });
+
+      if (error) {
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Enviar consulta →';
+        return;
+      }
+
+      document.getElementById('form-empresa-content').style.display = 'none';
+      document.getElementById('success-empresa').style.display = 'block';
+      setTimeout(() => {
+        closeModal('empresa');
+        document.getElementById('form-empresa-content').style.display = 'block';
+        document.getElementById('success-empresa').style.display = 'none';
+        btn.disabled = false;
+        btn.textContent = 'Enviar consulta →';
+        e.target.reset();
+      }, 3000);
+    }
+
+    async function submitCreator(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-creator');
+      const err = document.getElementById('error-creator');
+      btn.disabled = true;
+      btn.textContent = 'Enviando...';
+      err.style.display = 'none';
+
+      const { error } = await sb.from('postulaciones_creators').insert({
+        nombre: document.getElementById('c-nombre').value,
+        especialidad: document.getElementById('c-especialidad').value,
+        email: document.getElementById('c-email').value,
+        redes: document.getElementById('c-redes').value,
+        seguidores: document.getElementById('c-seguidores').value,
+        mercado: document.getElementById('c-mercado').value,
+      });
+
+      if (error) {
+        err.style.display = 'block';
+        btn.disabled = false;
+        btn.textContent = 'Quiero unirme →';
+        return;
+      }
+
+      document.getElementById('form-creator-content').style.display = 'none';
+      document.getElementById('success-creator').style.display = 'block';
+      setTimeout(() => {
+        closeModal('creator');
+        document.getElementById('form-creator-content').style.display = 'block';
+        document.getElementById('success-creator').style.display = 'none';
+        btn.disabled = false;
+        btn.textContent = 'Quiero unirme →';
+        e.target.reset();
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
